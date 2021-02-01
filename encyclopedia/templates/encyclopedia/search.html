@@ -1,0 +1,18 @@
+{% extends "encyclopedia/layout.html" %}
+
+{% block title %}
+    Search
+{% endblock %}
+
+{% block body %}
+    <h1>Search Results:</h1>
+    <ul>
+        {% if none %}
+            <h1>Not found Results</h1>
+        {% else %}
+            {% for result in results %}
+                <li><a href="{% url 'wiki' result %}">{{ result }}</a></li>
+            {% endfor %}
+        {% endif %}
+    </ul>
+{% endblock %}
