@@ -1,0 +1,62 @@
+{% extends "auctions/layout.html" %}
+
+
+
+{% block body %}
+    <h2 id="title">{{item.title}}</h2>
+<div class="listing-container">
+    <div class="div-content--left">
+        <img class="img-listing" src="{{item.image_url}}" alt="image_url" width="autofocus" height="autofocus"><br><br>
+    </div>
+
+    <div class="div-content--center">
+        <p><b>Description:</b> {{item.description}}</p>
+        <p><b>Starting Price:</b> ${{item.price|floatformat:2}}</p>
+        <p><b>Current bid: ${{bidobj.bid|default:0|floatformat:2}}</b></p>
+        <p>[ {{bidobj.count|default:0}} bids ]</p>
+        <button class="add-link"><a class="text-link align-content" href="{% url 'addwatchlist' item.id %}">Add Watchlist</a></button><br>
+        <form action="{% url 'placebid' item.id %}", method="POST">
+            {% csrf_token %}
+            <div class="align-content">
+                <input class="ip-area" type="number" step="any" name="bid" required>
+                <button class="bt-submit">Place bid</button>
+            </div>
+        </form>
+        {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+            <li{% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
+                {% endfor %}
+        </ul>
+        {% endif %}
+        <p><b>Details:</b></p>
+        <ul>
+            <li>Listed by: {{item.listed_by}} </li>
+            <li>Category: <a class="category-link" href="{% url 'category' item.category %}"> {{item.category}}</a></li>
+        </ul>
+    </div>
+
+    <div class="div-content--right">
+        <p><b>Comment:</b></p>
+        
+        <form action="{% url 'comment' item.id %}", method="POST">
+            {% csrf_token %}
+            {% for fm in commentform %}
+            <div class="align-content">
+                {{fm.errors}}
+                {{fm}} <br>
+            </div>
+            {% endfor %}
+            <div class="align-content">
+                <input class="bt-submit" type="submit" , value="Add">
+            </div>
+        </form>
+        {% for cm in commentlists %}
+            <ul>
+                <i class="gg-user"></i><b>{{cm.user}}: </b>{{cm.comment}}<br>Reviewed on {{cm.datetime}}
+            </ul>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

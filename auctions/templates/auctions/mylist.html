@@ -1,0 +1,23 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+<h2>My Lists</h2>
+    {% for item in lists %}
+    
+    <div class="wlist-container">
+        <div class="div-wlist-left">
+            <a href="{% url 'listing' item.id %}"><img src="{{ item.image_url }}" alt="{{item.title}}"></a>
+        </div>
+
+        <div class="div-wlist-center">
+            <a class="category-link" href="{% url 'listing' item.id %}"><p><b>{{ item.title }}</b></p></a>
+            <p>Price: {{ item.current_price }}</p>
+            <p>Category: <a class="category-link" href="{% url 'category' item.category %}">{{ item.category }}</a></p>
+        </div>
+
+        <div class="div-wlist-right">
+            <a class="wlist-rm" href="{% url 'closeauction' item.id %}">Close</a>
+        </div>
+    </div>
+    {% endfor %}
+{% endblock %}

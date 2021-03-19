@@ -1,0 +1,10 @@
+{% extends 'auctions/layout.html' %}
+
+{% block body %}
+{% if notifi %}
+    <h3 class="inform-user">Congratulations. You won !!!</h3>
+{% else %}
+    <h3 class="inform-user">Sorry. {{name}} had won this auction !!!</h3>
+{% endif %}
+
+{% endblock %}

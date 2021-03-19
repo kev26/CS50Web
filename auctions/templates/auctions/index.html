@@ -1,0 +1,19 @@
+{% extends "auctions/layout.html" %}
+
+{% block body %}
+    <h2>Active Listings</h2>
+    <div class="main-container">
+    {% for item in lists %}
+    <a class="link-container" href="{% url 'listing' item.id %}">
+        <div class="item-container">
+            <img class="img-lists" src="{{ item.image_url }}" alt="{{ item.title }}">
+            <div class="detail-index">
+                <b><div class="title-index">{{ item.title }}</div></b>
+                <div class="price-index">Current price: ${{ item.current_price|floatformat:2 }}</div>
+                <div >Category: <a class="link-category" href="{% url 'category' item.category %}">{{ item.category }}</a></div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+    </div>
+{% endblock %}
