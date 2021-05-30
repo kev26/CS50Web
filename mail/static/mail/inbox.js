@@ -85,28 +85,49 @@ function load_mailbox(mailbox) {
         }
 
         // Create button
-        const bt = document.createElement("BUTTON");
+        const bt = document.createElement("button");
         
 
         // Show the context for each mailbox
         if(mailbox === 'inbox') {
           element.innerHTML = `<strong>${result[email].sender}</strong> ${result[email].subject} ${result[email].timestamp}`;
           bt.innerHTML = 'archive';
+
+          document.querySelector('#emails-view').append(element,bt);
         }
         else if(mailbox === 'sent') {
           element.innerHTML = `<strong>To: </strong>${result[email].recipients} ${result[email].subject} ${result[email].timestamp}`;
+          
+          document.querySelector('#emails-view').append(element);
         }
         else if(mailbox === 'archive') {
           element.innerHTML = `<strong>${result[email].sender}</strong> ${result[email].subject} ${result[email].timestamp}`;
           bt.innerHTML = 'unarchive';
+
+          document.querySelector('#emails-view').append(element,bt);
         }
 
-        // Add element to the mailbox
-        document.querySelector('#emails-view').append(element);
-        if(mailbox === 'inbox') {
-          document.querySelector('#emails-view').append(bt)
-        }
-  
+        // Switch true-false when click archive button
+        bt.addEventListener('click', function() {
+          if (bt.innerHTML === 'archive') {
+            fetch(`/emails/${result[email].id}`, {
+              method:'PUT',
+              body: JSON.stringify({
+                archived: true
+              })
+            })
+            .then(result => load_mailbox('inbox'));
+          }
+          else if (bt.innerHTML === 'unarchive') {
+            fetch(`/emails/${result[email].id}`, {
+              method: 'PUT',
+              body: JSON.stringify({
+                archived: false
+              })
+            })
+            .then(result => load_mailbox('inbox'))
+          }
+        });
 
         //Show details email when click
         element.addEventListener('click', function() {
@@ -122,7 +143,6 @@ function load_mailbox(mailbox) {
         });
       }
   });
-
 }
 
 function load_email(id) {
@@ -131,12 +151,22 @@ function load_email(id) {
   document.querySelector('#email-details').style.display = 'block';
   document.querySelector('#emails-view').style.display = 'none';
 
+  //create button reply
+  const bt = document.createElement("button");
+  bt.innerHTML = 'Reply';
+  
+  const hr = document.createElement("hr");
+  
 
   fetch(`/emails/${id}`)
   .then(response => response.json())
   .then(result => {
     console.log(result);
-    document.querySelector('#email-details').innerHTML = `<strong>From:</strong> ${result.sender}<br><strong>To:</strong> ${result.recipients}<br><strong>Subject:</strong> ${result.subject}<br><strong>Timestamp:</strong> ${result.timestamp}<hr>${result.body}`;
-  });
-}
 
+    const emdt = document.querySelector('#email-details');
+    emdt.innerHTML = `<strong>From:</strong> ${result.sender}<br><strong>To:</strong> ${result.recipients}<br><strong>Subject:</strong> ${result.subject}<br><strong>Timestamp:</strong> ${result.timestamp}<br>`;
+    emdt.append(bt,hr,`${result.body}`);
+  });
+
+  bt.addEventListener('click', compose_email);
+}
