@@ -6,13 +6,11 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
   document.querySelector('#compose').addEventListener('click', compose_email);
 
-  //if form is submitted, send email !
-  document.querySelector('form').onsubmit = send_email
-
   // By default, load the inbox
   load_mailbox('inbox');
 
-
+  //if form is submitted, send email !
+  document.querySelector('form').onsubmit = send_email
 });
 
 function compose_email() {
@@ -51,7 +49,6 @@ function send_email() {
   });
   // Stop from submitting
   return false;
-  
 }
 
 function load_mailbox(mailbox) {
@@ -86,8 +83,7 @@ function load_mailbox(mailbox) {
 
         // Create button
         const bt = document.createElement("button");
-        
-
+      
         // Show the context for each mailbox
         if(mailbox === 'inbox') {
           element.innerHTML = `<strong>${result[email].sender}</strong> ${result[email].subject} ${result[email].timestamp}`;
@@ -146,7 +142,7 @@ function load_mailbox(mailbox) {
 }
 
 function load_email(id) {
-  
+
   //Show block details email and hide other views
   document.querySelector('#email-details').style.display = 'block';
   document.querySelector('#emails-view').style.display = 'none';
@@ -155,18 +151,41 @@ function load_email(id) {
   const bt = document.createElement("button");
   bt.innerHTML = 'Reply';
   
+  //create hre element
   const hr = document.createElement("hr");
-  
 
   fetch(`/emails/${id}`)
   .then(response => response.json())
   .then(result => {
-    console.log(result);
+
+    //create textarea for display body
+    const txarea = document.createElement('textarea');
+    txarea.setAttribute('id','email-body');
+    txarea.setAttribute('class','form-control');
+    txarea.setAttribute('disabled','');
+    txarea.append(`${result.body}`);
 
     const emdt = document.querySelector('#email-details');
     emdt.innerHTML = `<strong>From:</strong> ${result.sender}<br><strong>To:</strong> ${result.recipients}<br><strong>Subject:</strong> ${result.subject}<br><strong>Timestamp:</strong> ${result.timestamp}<br>`;
-    emdt.append(bt,hr,`${result.body}`);
-  });
+    emdt.append(bt,hr,txarea);
 
-  bt.addEventListener('click', compose_email);
+    bt.addEventListener('click', function() {
+    document.querySelector('#compose-view').style.display = 'block';
+    document.querySelector('#email-details').style.display = 'none';
+
+    document.querySelector('#compose-recipients').value = `${result.sender}`
+
+    if (result.subject.startsWith('Re: ')) {
+      document.querySelector('#compose-subject').value = `${result.subject}`
+    }
+    else {
+      document.querySelector('#compose-subject').value = `Re: ${result.subject}`
+    }
+
+    //pre-fill the body of the last email
+    const newbd = document.querySelector('#compose-body');
+    newbd.innerHTML = `\nOn ${result.timestamp} ${result.sender} wrote: ${result.body}`
+    document.querySelector('#compose-body').focus();
+    });
+  });
 }
