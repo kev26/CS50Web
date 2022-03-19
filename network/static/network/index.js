@@ -82,12 +82,12 @@ function load_posts() {
 }
 
 
-function profile(username) {
+function profile(name) {
 
     // Clear page and show Page name
     document.querySelector('#profile-view').innerHTML = `<h3>Profile</h3>`
 
-    fetch(`/profile/${username}`)
+    fetch(`/profile/${name}`)
     .then(response => response.json())
     .then(data => {
 
@@ -107,33 +107,38 @@ function profile(username) {
 
         // Get name of main user, and hide follow button if main user same profile user
         const mainuser = document.querySelector('#main-user').textContent
-        if (mainuser !== data['user']) {
+        const mainuser_id = document.querySelector('#main-user').value
+        if (mainuser === data['user']) {
 
-            if (mainuser in data['followers']) {
+            document.querySelector('.fl-btn').remove()
+        }
+        else {
+
+            if (mainuser_id in data['followers']) {
 
                 document.querySelector('.fl-btn').innerHTML = 'unfollow'
-
             }
             else {
 
                 document.querySelector('.fl-btn').innerHTML = 'follow'
+            }
 
-                document.querySelector('.fl-btn').addEventListener('click', () => {
+            document.querySelector('.fl-btn').addEventListener('click', () => {
 
-                    fetch(`/profile/${data['user']}`, {
-                        method: "PUT",
-                        headers: {'X-CSRFToken': csrftoken},
-                        mode: 'same-origin',
-                        body: JSON.stringify({
-                            followers: +mainuser
-                        })
+                fetch(`/profile/${data['user']}`, {
+                    method: "PUT",
+                    headers: {'X-CSRFToken': csrftoken},
+                    mode: 'same-origin',
+                    body: JSON.stringify({
+                        isfollower: mainuser_id in data['followers'] ? true : false,
                     })
                 })
-            }
-        }
-        else {
-
-            document.querySelector('.fl-btn').remove()
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data)
+                    profile(name)
+                })
+            }) 
         }
     })
 } 

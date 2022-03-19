@@ -9,8 +9,8 @@ from django.db import models
 
 
 class User(AbstractUser):
-    followers = models.ManyToManyField('self', blank=True)
-    following = models.ManyToManyField('self', blank=True)
+    followers = models.ManyToManyField('self', blank=True, null=True)
+    following = models.ManyToManyField('self', blank=True, null=True)
 
     def serialize(self):
         return {

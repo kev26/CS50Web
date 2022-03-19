@@ -97,12 +97,37 @@ def posts(request):
     return JsonResponse([post.serialize() for post in posts], safe=False)
     
 
-def profile(request, username):
+def profile(request, name):
 
     if request.method == "GET":
-        profile = User.objects.get(username=username)
-        return JsonResponse(profile.serialize(), safe=False)
+        p = User.objects.get(username=name)
+        return JsonResponse(p.serialize(), safe=False)
 
     elif request.method == "PUT":
+        # Get data in json file from fetch PUT
         data = json.loads(request.body)
-        print(data)
+        
+        pu = User.objects.get(username=name)
+
+        mu = User.objects.get(username=request.user)
+
+        print(data['isfollower'])
+
+        if data['isfollower'] == True:
+            # Increase followers of profile user
+           pu.followers.remove(mu)
+            # Increase following of main user
+           mu.following.remove(pu)
+           print('ok')
+        elif data['isfollower'] == False:
+            # Decrease followers of profile user
+           pu.followers.add(mu)
+            # Decrease following of main user
+           mu.following.add(pu)
+        pu.save()
+        mu.save()
+        print(pu)
+        print(pu.followers.all())
+        print(mu)
+        print(mu.following.all())
+        return JsonResponse(pu.serialize(), safe=False)

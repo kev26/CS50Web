@@ -12,5 +12,5 @@ urlpatterns = [
     # API Routes
     path("newpost", views.newpost, name="newpost"),
     path("posts", views.posts, name="posts"),
-    path("profile/<str:username>", views.profile, name="profile"),
+    path("profile/<str:name>", views.profile, name="profile"),
 ]
