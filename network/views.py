@@ -111,19 +111,16 @@ def profile(request, name):
 
         mu = User.objects.get(username=request.user)
 
-        print(data['isfollower'])
-
-        if data['isfollower'] == True:
+        if data['action'] == 'follow':
             # Increase followers of profile user
-           pu.followers.remove(mu)
-            # Increase following of main user
-           mu.following.remove(pu)
-           print('ok')
-        elif data['isfollower'] == False:
-            # Decrease followers of profile user
            pu.followers.add(mu)
-            # Decrease following of main user
+            # Increase following of main user
            mu.following.add(pu)
+        elif data['action'] == 'unfollow':
+            # Decrease followers of profile user
+           pu.followers.remove(mu)
+            # Decrease following of main user
+           mu.following.remove(pu)
         pu.save()
         mu.save()
         print(pu)

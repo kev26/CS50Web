@@ -107,30 +107,32 @@ function profile(name) {
 
         // Get name of main user, and hide follow button if main user same profile user
         const mainuser = document.querySelector('#main-user').textContent
-        const mainuser_id = document.querySelector('#main-user').value
-        if (mainuser === data['user']) {
+
+        if (mainuser == data['user']) {
 
             document.querySelector('.fl-btn').remove()
         }
         else {
 
-            if (mainuser_id in data['followers']) {
+            const flbt = document.querySelector('.fl-btn')
 
-                document.querySelector('.fl-btn').innerHTML = 'unfollow'
+            if (data['followers'].includes(mainuser)) {
+
+                flbt.innerHTML = 'unfollow'
             }
             else {
 
-                document.querySelector('.fl-btn').innerHTML = 'follow'
+                flbt.innerHTML = 'follow'
             }
 
             document.querySelector('.fl-btn').addEventListener('click', () => {
 
-                fetch(`/profile/${data['user']}`, {
+                fetch(`/profile/${name}`, {
                     method: "PUT",
                     headers: {'X-CSRFToken': csrftoken},
                     mode: 'same-origin',
                     body: JSON.stringify({
-                        isfollower: mainuser_id in data['followers'] ? true : false,
+                        action: flbt.textContent
                     })
                 })
                 .then(response => response.json())
