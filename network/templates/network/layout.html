@@ -10,28 +10,28 @@
     <body>
 
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
-            <a class="navbar-brand" href="{% url 'index' %}">Network</a>
+            <a id="network" class="navbar-brand default-page" href="#">Network</a>
           
-            <div>
+            <div class="navbar-div">
               <ul class="navbar-nav mr-auto">
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a id="main-user" class="nav-link" href="#"><strong>{{ user.username }}</strong></a>
+                        <a id="main-user" value="{{ user.id }}" class="nav-link" href="#"><strong>{{ user.username }}</strong></a>
                     </li>
                 {% endif %}
                 <li class="nav-item">
-                  <a class="nav-link" href="{% url 'index' %}">All Posts</a>
+                  <a id="allposts-nav" class="nav-link default-page" href="#">All Posts</a>
                 </li>
                 {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Following</a>
+                        <a id="fl-posts" class="nav-link" href="#">Following</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}">Log Out</a>
                     </li>
                 {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'login' %}">Log In</a>
+                        <a id="login" class="nav-link" href="{% url 'login' %}">Log In</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'register' %}">Register</a>
@@ -45,7 +45,6 @@
             {% block body %}
             {% endblock %}
             {% block script %}
-            <script src="https://cdn.jsdelivr.net/npm/js-cookie@3/dist/js.cookie.min.js"></script>
             <script src="{% static 'network/index.js' %}" defer></script>
             {% endblock %}
         </div>

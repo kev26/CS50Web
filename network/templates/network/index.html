@@ -2,17 +2,33 @@
 
 {% block body %}
 
-<div id="newpost-view">
-        <h3>All Posts</h3>
-        <h6>New Post</h6>
-        <form id="newpost-frm">
-            <textarea id="post-content" class="form-control"></textarea>
-            <button id="submit-post" type="submit" class="btn btn-success">Post</button>
-        </form>
-    </div>
+<div id="postfrm-view">
+    <h3 class="h3title">New Post</h3>
+    <form id="post-frm">
+        <textarea id="post-content" class="form-control"></textarea>
+        <button id="submit-post" type="submit" class="btn btn-success">Post</button>
+    </form>
+</div>
 
-    <div id="profile-view"></div>
+<div id="edit-view">
+    <h3 class="h3title">Edit Post</h3>
+    <form id="edit-frm">
+        <textarea id="edit-content" class="form-control"></textarea>
+        <button id="submit-edit" type="submit" class="btn btn-success">Update</button>
+    </form>
+</div>
+
+
+<div id="profile-view"></div>
+
+<div id="posts-view"></div>
+
+<div id="navpage-view">
+    <nav class="nav-pages" aria-label="Page navigation example">
+        <ul class="pagination">
     
-    <div id="posts-view"></div>
+        </ul>
+    </nav>
+</div>
 
 {% endblock %}
