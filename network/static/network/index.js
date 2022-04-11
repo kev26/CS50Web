@@ -205,7 +205,7 @@ function load_posts(name) {
                                 ${post.content}<br>
                                 ${post.timestamp}
                                 <a id="edit-id${post.postid}" class="editpost" href="#">Edit</a><br>
-                                <button id="like-${post.postid}"></button>
+                                <button id="like-${post.postid}" class="like-btn"></button> <span id="totallikes-${post.postid}">${post.likes.length}</span>
                             </div>`
 
                 document.querySelector('#posts-view').innerHTML += postdiv
@@ -217,18 +217,7 @@ function load_posts(name) {
                 
                 divp = document.querySelector(`#div-${post.postid}`)
                 editbtn = document.querySelector(`#edit-id${post.postid}`)
-
-                // Remove edit tag if not mainuser's post, else add event click for Edit button
-                if (mainuser != post.user) {
-                    editbtn.remove()
-                }
-                else {
-                    editbtn.addEventListener('click', () => {
-                        editpost(post)
-                        window.event.stopPropagation();
-                    })
-                }
-
+                
                 // Load post detail
                 divp.addEventListener('click', () => {
                     console.log(post)
@@ -236,40 +225,32 @@ function load_posts(name) {
                 })
 
                 // Load profile, use onclick for overwirite click event, this case apply for class
-                divp.querySelector(`a.prf-${post.user}`).onclick = () => {
+                divp.querySelector(`a.prf-${post.user}`).onclick = (e) => {
 
                     profile(post.user)
                     // Prevent further propagation of the current event, this case will prevent load post detail
-                    window.event.stopPropagation();
+                    e.stopPropagation();
+                }
+
+                // Remove edit tag if not mainuser's post, else add event click for Edit button
+                if (mainuser != post.user) {
+                    editbtn.remove()
+                }
+                else {
+                    editbtn.addEventListener('click', (e) => {
+                        editpost(post)
+                        e.stopPropagation();
+                    })
                 }
 
                 // LIKE
-                likebtn = document.querySelector(`#like-${post.postid}`)
+                const likebtn = document.querySelector(`#like-${post.postid}`)
 
-                if (post.likes.includes(mainuser)) {
-                    likebtn.innerHTML = 'Unlike'
-                }
-                else {
-                    likebtn.innerHTML = 'Like'
-                }
+                post['likes'].includes(mainuser)?likebtn.innerHTML = 'Unlike':likebtn.innerHTML = 'Like'
 
-                mainuserID = document.querySelector('#main-user').getAttribute('value')
-
-                likebtn.addEventListener('click', () => {
-                    fetch(`/post/${post.postid}`, {
-                        method: "PUT",
-                        headers: {'X-CSRFtoken': csrftoken},
-                        mode: "same-origin",
-                        body: JSON.stringify({
-                            userlike: mainuserID
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(result => {
-                        result.likes.includes(mainuser)?likebtn.innerHTML='Like':likebtn.innerHTML='Unlike';
-                        console.log(result)
-                    })
-                    window.event.stopPropagation()
+                likebtn.addEventListener('click', (event) => {
+                    like(post)
+                    event.stopPropagation()
                 })
             }
 
@@ -361,6 +342,8 @@ function post_detail(post) {
                     ${post.content}<br>
                     ${post.timestamp}
                     <a id="edit-id${post.postid}" class="editpost" href="#">Edit</a>
+                    <a id="del-id${post.postid}" class="del-post" href="#">Delete</a>
+                    <button id="like-${post.postid}" class="like-btn"></button> <span id="totallikes-${post.postid}">${post.likes.length}</span>
                 </div>`
 
     document.querySelector('#posts-view').innerHTML += postdiv
@@ -369,16 +352,56 @@ function post_detail(post) {
         profile(post.user)
     }
 
-    editbtn = document.querySelector(`#edit-id${post.postid}`)
+    const editbtn = document.querySelector(`#edit-id${post.postid}`)
+    const delelm = document.querySelector(`#del-id${post.postid}`)
 
-    if (mainuser == post.user) {
-        editbtn.addEventListener('click', () => {
-            editpost(post)
-        })
-    }
-    else {
+    if (mainuser != post.user) {
         editbtn.remove()
+        delelm.remove()
     }
+
+    editbtn.addEventListener('click', () => {
+        editpost(post)
+    })
+
+    delelm.addEventListener('click', () => {
+        delete_post(post)
+    })
+}
+
+function delete_post(post) {
+    fetch(`/post/${post.postid}`, {
+        method: "PUT",
+        headers: {'X-CSRFtoken': csrftoken},
+        mode: "same-origin",
+        body: JSON.stringify({
+            delpost: post.postid
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        profile(mainuser)
+    })
+}
+
+function like(post) {
+
+    const likebtn = document.querySelector(`#like-${post.postid}`)
+    const mainuserID = document.querySelector('#main-user').getAttribute('value')
+
+    fetch(`/post/${post.postid}`, {
+        method: "PUT",
+        headers: {'X-CSRFtoken': csrftoken},
+        mode: "same-origin",
+        body: JSON.stringify({
+            userlike: mainuserID
+        })
+    })
+    .then(res => res.json())
+    .then(result => {
+        result['likes'].includes(mainuser)?likebtn.innerHTML='Unlike':likebtn.innerHTML='Like';
+        document.querySelector(`#totallikes-${post.postid}`).innerHTML = result.likes.length
+    })
 }
 
 
@@ -395,8 +418,6 @@ function profile(name) {
     // Clear page and show Page name
     document.querySelector('#profile-view').innerHTML = `<h3>Profile</h3>`
 
-
-
     fetch(`/profile/${name}`)
     .then(response => response.json())
     .then(data => {
@@ -412,8 +433,6 @@ function profile(name) {
         // Load profile template
         document.querySelector('#profile-view').innerHTML += context
 
-
-
         if (mainuser == data['user']) {
 
             document.querySelector('.fl-btn').remove()
@@ -422,12 +441,7 @@ function profile(name) {
 
             const flbt = document.querySelector('.fl-btn')
 
-            if (data['followers'].includes(mainuser)) {
-                flbt.innerHTML = 'unfollow'
-            }
-            else {
-                flbt.innerHTML = 'follow'
-            }
+            data['followers'].includes(mainuser)?flbt.innerHTML = 'unfollow':flbt.innerHTML = 'follow';
 
             document.querySelector('.fl-btn').addEventListener('click', () => {
 

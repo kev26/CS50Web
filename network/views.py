@@ -121,9 +121,12 @@ def postid(request, id):
     elif request.method == "PUT":
         data = json.loads(request.body)
         post = Post.objects.get(id=id)
+        
+        # Update content
         if 'content' in data:
             post.content = data['content']
 
+        # Update likes
         elif 'userlike' in data:
             # Get user object from userid liked
             user = User.objects.get(id=data['userlike'])
@@ -132,6 +135,12 @@ def postid(request, id):
                 post.likes.remove(user)
             else:
                 post.likes.add(user)
+                
+        elif 'delpost' in data:
+            username = post.user.username
+            post.delete()
+            return posts(request, username)
+        
         post.save()
 
     return JsonResponse(post.serialize(), safe=False)
