@@ -101,16 +101,26 @@ def newpost(request):
     return JsonResponse({"message": "Post has been created successfully."}, status=201)
 
 
-def posts(request, name):
-
+def posts(request, name, numpage = 1):
+    
     if name == 'all':
         posts = Post.objects.order_by("-timestamp").all()
     elif name == 'following':
         posts = Post.objects.filter(user__followers=request.user).order_by("-timestamp")
     else:
         posts = Post.objects.filter(user__username = name).order_by("-timestamp")
+        
+    # pagination with 10posts/page
+    p = Paginator(posts, 10)
+    # Get total pages
+    totalpage = p.num_pages
+    # Get post based on specified page number
+    posts = [post.serialize() for post in p.page(numpage).object_list]
 
-    return JsonResponse([post.serialize() for post in posts], safe=False)
+    return JsonResponse({
+        'totalpage':totalpage,
+        'posts': posts
+    }, safe=False)
 
 
 def postid(request, id):

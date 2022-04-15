@@ -19,6 +19,7 @@ const csrftoken = getCookie('csrftoken');
 
 // Get name of main user, and hide follow button if main user same profile user
 const mainuser = document.querySelector('#main-user').textContent
+let num = Math.floor(Math.random() * 10000);
 
 // Load default when user login
 load_default();
@@ -26,22 +27,30 @@ load_default();
 // Load default when user click on network and allpost
 const elements = document.querySelectorAll('.default-page');
 elements.forEach(element => {
-    element.addEventListener('click', () => {
+    element.addEventListener('click', (event) => {
         load_default();
+        event.preventDefault()
     });
 });
 
-// Load profile
-document.querySelector('#main-user').addEventListener('click', () => {
+// Load profile when clicked
+document.querySelector('#main-user').addEventListener('click', (event) => {
     profile(document.querySelector('#main-user').textContent)
+    document.title = mainuser
+    event.preventDefault()
 })
 
-// Load following's posts
-document.querySelector('#fl-posts').addEventListener('click', () => {
-    document.querySelector('#postfrm-view').style.display = 'none'
-    document.querySelector('#profile-view').style.display = 'none'
+// Load following's posts when clicked
+document.querySelector('#fl-posts').addEventListener('click', (event) => {
+    document.querySelectorAll('div:not(.body,.navbar-div)').forEach(div => {
+        div.style.display = 'none';
+    })
+    document.querySelector('#posts-view').style.display = 'block'
+    document.querySelector('#navpage-view').style.display = 'block'
     load_posts('following')
+    event.preventDefault()
 })
+
 
 
 function load_default() {
@@ -70,7 +79,8 @@ function load_default() {
     }
 
     // If the form submited, run newpost function
-    document.getElementById('postfrm-view').onsubmit = newpost
+    const form = document.querySelector('#post-frm')
+    form.addEventListener('submit', newpost)
     
     // Load All Posts
     load_posts('all')
@@ -78,7 +88,7 @@ function load_default() {
 
 
 // Set default page
-function newpost() {
+function newpost(event) {
         
     // Get content from text-area
     content = document.querySelector('#post-content').value
@@ -93,7 +103,6 @@ function newpost() {
     })
     .then(response => response.json())
     .then(result => {
-        console.log(result)
         load_posts('all')
     })
     .catch((error) => {
@@ -104,101 +113,38 @@ function newpost() {
     document.querySelector('#post-content').value = ''
     document.querySelector('#submit-post').disabled = true;
 
-    // Stop submitting from form
-    return false
+    event.preventDefault()
 }
 
 
-function editpost(post) {
-    console.log(post)
-
-    document.querySelectorAll('div:not(.body,.navbar-div)').forEach(div => {
-        div.style.display = 'none';
-    })
-    document.querySelector('#edit-view').style.display = 'block'
-    
-    // Fill old content into textarea and focus
-    content = document.querySelector('#edit-content')
-    content.value = post.content
-    document.querySelector('#edit-content').focus()
-
-    content.onkeyup = () => {
-        if (content.value.length === 0) {
-            document.querySelector('#submit-edit').disabled = true
-        }
-        else {
-            document.querySelector('#submit-edit').disabled = false
-        }
-    }
-
-    document.querySelector('#edit-frm').onsubmit = updatepost
-
-    function updatepost() {
-        
-        fetch(`/post/${post.postid}`, {
-            method: 'PUT',
-            headers: {'X-CSRFToken': csrftoken},
-            mode: "same-origin",
-            body: JSON.stringify({
-                content: content.value
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            post_detail(data)
-        })
-        .catch(error => {
-            console.error('Error:', error)
-        })
-
-        // Stop submitting from form
-        return false
-    }
-}
-
-
-function load_posts(name) {
+function load_posts(name, page = 1) {
 
     document.querySelector('#posts-view').innerHTML = `<h3>Posts</h3>`
 
-    fetch(`/posts/${name}`)
+    fetch(`/posts/${name}/${page}`)
     .then(response => response.json())
     .then(result => {
+        console.log(result.totalpage, result.posts)
 
-        if (result.length === 0) {
-            document.querySelector('.nav-pages').style.display = 'none'
+        if (result.posts.length === 0) {
+            document.querySelector('#navpage-view').style.display = 'none'
             return document.querySelector('#posts-view').innerHTML = `<h4>No posts here !</h4>`;
         }
-
-        document.querySelector('.nav-pages').style.display = 'block'
-        pagination(result);
+        else {
+    
+            pagination(result.posts, page, result.totalpage);
+        }
     })
 
+    function pagination(posts, currentPage, totalPage) {
 
-    function pagination(result) {
-
-        // Set default page is 1
-        let currentPage = 1;
-        // Set item per page
-        let itemPerPage = 10;
-
-        // Calculate number of pages
-        let totalPage = Math.ceil(result.length/itemPerPage);
+        renderposts(posts)
         
-        function renderposts(currentPage) {
+        function renderposts(posts) {
 
-            // Calculate posts base on start and end point
-            let start = (currentPage - 1) * itemPerPage;
-            let end = start + itemPerPage;
+            for (let i in posts) {
 
-            let items = result.slice(start,end)
-            
-            // Render posts
-            document.querySelector('#posts-view').innerHTML = '';
-
-            for (let i in items) {
-
-                post = items[i]
+                post = posts[i]
                 
                 postdiv =   `<div id="div-${post.postid}" class="post-dv" style="border: solid 1px black">
                                 <a class="prf-${post.user}" href="#">${post.user}<br></a>
@@ -211,25 +157,20 @@ function load_posts(name) {
                 document.querySelector('#posts-view').innerHTML += postdiv
             };
 
-            for (let i in items) {
+            for (let i in posts) {
 
-                let post = items[i]
+                let post = posts[i]
                 
                 divp = document.querySelector(`#div-${post.postid}`)
                 editbtn = document.querySelector(`#edit-id${post.postid}`)
                 
-                // Load post detail
-                divp.addEventListener('click', () => {
-                    console.log(post)
-                    post_detail(post)
-                })
 
                 // Load profile, use onclick for overwirite click event, this case apply for class
                 divp.querySelector(`a.prf-${post.user}`).onclick = (e) => {
 
                     profile(post.user)
-                    // Prevent further propagation of the current event, this case will prevent load post detail
                     e.stopPropagation();
+                    e.preventDefault()
                 }
 
                 // Remove edit tag if not mainuser's post, else add event click for Edit button
@@ -237,9 +178,8 @@ function load_posts(name) {
                     editbtn.remove()
                 }
                 else {
-                    editbtn.addEventListener('click', (e) => {
+                    editbtn.addEventListener('click', () => {
                         editpost(post)
-                        e.stopPropagation();
                     })
                 }
 
@@ -248,14 +188,22 @@ function load_posts(name) {
 
                 post['likes'].includes(mainuser)?likebtn.innerHTML = 'Unlike':likebtn.innerHTML = 'Like'
 
-                likebtn.addEventListener('click', (event) => {
+                likebtn.addEventListener('click', () => {
                     like(post)
-                    event.stopPropagation()
                 })
-            }
 
-            // RENDER NAV PAGES
-            // Get ul tag in HTML
+                const totalLikes = document.querySelector(`#totallikes-${post.postid}`)
+                if (post.likes.length == 0) {
+                    totalLikes.innerHTML =''
+                }
+            }
+        }
+
+        // RENDER NAV PAGES
+        renderpagination(currentPage, totalPage)
+
+        function renderpagination(currentPage, totalPage) {
+
             ul = document.querySelector('.pagination')
 
             // Render number pages nav and set default disabled for previous and next button
@@ -280,7 +228,7 @@ function load_posts(name) {
                             <li id="li-next" class="page-item disabled">
                                 <a class="btn-next page-link" href="#">Next</a>
                             </li>`
-                                
+
             // Add active state for current page
             if (document.querySelector(`#li-${currentPage}`)) {
 
@@ -298,96 +246,119 @@ function load_posts(name) {
             const pEnd = document.querySelector(`#p${totalPage}`)
 
             pFirst.addEventListener('click', () => {
-                currentPage = 1
-                renderposts(currentPage)
+                load_posts(name, 1)
             })
 
             pEnd.addEventListener('click', () => {
                 currentPage = totalPage
-                renderposts(currentPage)
+                load_posts(name, currentPage)
             })
-
 
             const btnNext = document.querySelector('.btn-next');
             const btnPrevious = document.querySelector('.btn-previous');
 
             btnNext.addEventListener('click', () => {
                 currentPage++;
-                renderposts(currentPage);
+                load_posts(name, currentPage)
             })
 
             btnPrevious.addEventListener('click', () => {
                 currentPage--
-                renderposts(currentPage);
+                load_posts(name, currentPage)
             })
         }
-
-        // Load page 1 default 
-        renderposts(currentPage);
     }
 }
 
 
-function post_detail(post) {
+function editpost(post) {
+    console.log(post)
 
-    document.querySelectorAll('div:not(.body,.navbar-div').forEach(div => {
-        div.style.display = 'none'
+    document.querySelectorAll('div:not(.body,.navbar-div)').forEach(div => {
+        div.style.display = 'none';
     })
-    document.querySelector('#posts-view').style.display = 'block'
 
-    document.querySelector('#posts-view').innerHTML = `<h3>Post Detail</h3>`
+    const editview = document.querySelector('#edit-view')
+    editview.style.display = 'block'
 
-    postdiv =   `<div id="div-${post.postid}" class="post-dv" style="border: solid 1px black">
-                    <a class="prf-${post.user}" href="#">${post.user}<br></a>
-                    ${post.content}<br>
-                    ${post.timestamp}
-                    <a id="edit-id${post.postid}" class="editpost" href="#">Edit</a>
-                    <a id="del-id${post.postid}" class="del-post" href="#">Delete</a>
-                    <button id="like-${post.postid}" class="like-btn"></button> <span id="totallikes-${post.postid}">${post.likes.length}</span>
-                </div>`
+    editview.innerHTML = ''
 
-    document.querySelector('#posts-view').innerHTML += postdiv
+    editview.innerHTML +=   `<h3 class="h3title">Edit Post</h3>
+                                <form id="edit-frm">
+                                    <textarea id="edit-content" class="form-control"></textarea>
+                                    <button id="submit-edit" type="submit" class="btn btn-success">Update</button>
+                                    <a id="del-${post.postid}" href="#">Delete</a>
+                                </form>`
+    
+    // Fill old content into textarea and focus
+    const content = document.querySelector('#edit-content')
+    const editSubmit = document.querySelector('#submit-edit')
+    const editfrm = document.querySelector('#edit-frm')
+    
+    content.value = post.content
+    content.focus()
 
-    document.querySelector(`.prf-${post.user}`).onclick = () => {
-        profile(post.user)
+    content.onkeyup = () => {
+        if (content.value.length === 0) {
+            editSubmit.disabled = true
+        }
+        else {
+            editSubmit.disabled = false
+        }
     }
 
-    const editbtn = document.querySelector(`#edit-id${post.postid}`)
-    const delelm = document.querySelector(`#del-id${post.postid}`)
+    //document.querySelector('#edit-frm').onsubmit = updatepost
 
-    if (mainuser != post.user) {
-        editbtn.remove()
-        delelm.remove()
-    }
 
-    editbtn.addEventListener('click', () => {
-        editpost(post)
-    })
+    editfrm.addEventListener('submit', updatepost)
 
-    delelm.addEventListener('click', () => {
-        delete_post(post)
-    })
-}
-
-function delete_post(post) {
-    fetch(`/post/${post.postid}`, {
-        method: "PUT",
-        headers: {'X-CSRFtoken': csrftoken},
-        mode: "same-origin",
-        body: JSON.stringify({
-            delpost: post.postid
+    function updatepost(event) {
+        
+        fetch(`/post/${post.postid}`, {
+            method: 'PUT',
+            headers: {'X-CSRFToken': csrftoken},
+            mode: "same-origin",
+            body: JSON.stringify({
+                content: content.value
+            })
         })
-    })
-    .then(res => res.json())
-    .then(result => {
-        profile(mainuser)
+        .then(res => res.json())
+        .then(data => {
+            profile(data.user)
+        })
+        .catch(error => {
+            console.error('Error:', error)
+        })
+        event.preventDefault()
+    }
+
+    const delbtn = document.querySelector(`#del-${post.postid}`)
+
+    delbtn.addEventListener('click', () => {
+        
+        fetch(`/post/${post.postid}`, {
+            method: "PUT",
+            headers: {'X-CSRFtoken': csrftoken},
+            mode: "same-origin",
+            body: JSON.stringify({
+                delpost: post.postid
+            })
+        })
+        .then(res => res.json())
+        .then(result => {
+            profile(post.user)
+        })
+    
     })
 }
+
+
 
 function like(post) {
 
     const likebtn = document.querySelector(`#like-${post.postid}`)
     const mainuserID = document.querySelector('#main-user').getAttribute('value')
+    const totalLikes = document.querySelector(`#totallikes-${post.postid}`)
 
     fetch(`/post/${post.postid}`, {
         method: "PUT",
@@ -400,13 +371,14 @@ function like(post) {
     .then(res => res.json())
     .then(result => {
         result['likes'].includes(mainuser)?likebtn.innerHTML='Unlike':likebtn.innerHTML='Like';
-        document.querySelector(`#totallikes-${post.postid}`).innerHTML = result.likes.length
+        result.likes.length == 0 ? totalLikes.innerHTML = '': totalLikes.innerHTML = result.likes.length
     })
 }
 
 
 
 function profile(name) {
+
 
     document.querySelectorAll('div:not(.body, .navbar-div)').forEach(div => {
         div.style.display = 'none'
@@ -421,8 +393,6 @@ function profile(name) {
     fetch(`/profile/${name}`)
     .then(response => response.json())
     .then(data => {
-
-        console.log(data)
 
         context =   `<div id="profile-div">
                         <p><strong>${data['user']} <button id=${data['user']} class="fl-btn"></button></strong></p>
@@ -465,4 +435,4 @@ function profile(name) {
 
     // Load posts
     load_posts(name)
-} 
+}
