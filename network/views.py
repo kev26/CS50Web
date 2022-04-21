@@ -102,31 +102,48 @@ def newpost(request):
 
 
 def posts(request, name, numpage = 1):
+
+    if request.method != "GET":
+        return JsonResponse({'Error': 'GET request required.'}, status=400)
     
+
+
     if name == 'all':
         posts = Post.objects.order_by("-timestamp").all()
     elif name == 'following':
         posts = Post.objects.filter(user__followers=request.user).order_by("-timestamp")
     else:
-        posts = Post.objects.filter(user__username = name).order_by("-timestamp")
-        
+        try:
+            User.objects.get(username=name)
+            posts = Post.objects.filter(user__username=name).order_by("-timestamp")
+        except User.DoesNotExist:
+            return JsonResponse({'Error': 'User not found.'}, status=404)
+
     # pagination with 10posts/page
     p = Paginator(posts, 10)
     # Get total pages
     totalpage = p.num_pages
-    # Get post based on specified page number
-    posts = [post.serialize() for post in p.page(numpage).object_list]
 
-    return JsonResponse({
-        'totalpage':totalpage,
-        'posts': posts
-    }, safe=False)
+    if numpage <= totalpage:
+        # Get post based on specified page number
+        posts = [post.serialize() for post in p.page(numpage).object_list]
+        return JsonResponse({
+            'totalpage': totalpage,
+            'posts': posts
+        }, safe=False)
+    else:
+        return JsonResponse({'Error': 'Page not found'}, status=404)
+
+
 
 
 def postid(request, id):
 
     if request.method == "GET":
-        post = Post.objects.get(id=id)
+        try:
+            post = Post.objects.get(id=id)
+        except:
+            return JsonResponse({'Error':"Post doesn't exits"}, status=404)
 
     elif request.method == "PUT":
         data = json.loads(request.body)
@@ -150,8 +167,11 @@ def postid(request, id):
             username = post.user.username
             post.delete()
             return posts(request, username)
-        
+
         post.save()
+
+    else:
+        return JsonResponse({'Error': 'GET or PUT required.'}, status=400)
 
     return JsonResponse(post.serialize(), safe=False)
 

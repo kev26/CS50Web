@@ -146,12 +146,13 @@ function load_posts(name, page = 1) {
 
                 post = posts[i]
                 
-                postdiv =   `<div id="div-${post.postid}" class="post-dv" style="border: solid 1px black">
+                postdiv =   `<div id="div-${post.postid}" class="post" style="border: solid 1px black">
                                 <a class="prf-${post.user}" href="#">${post.user}<br></a>
                                 ${post.content}<br>
                                 ${post.timestamp}
                                 <a id="edit-id${post.postid}" class="editpost" href="#">Edit</a><br>
-                                <button id="like-${post.postid}" class="like-btn"></button> <span id="totallikes-${post.postid}">${post.likes.length}</span>
+                                <img id="like-${post.postid}" class="post__like-btn">
+                                <span id="totallikes-${post.postid}">${post.likes.length}</span>
                             </div>`
 
                 document.querySelector('#posts-view').innerHTML += postdiv
@@ -186,11 +187,19 @@ function load_posts(name, page = 1) {
                 // LIKE
                 const likebtn = document.querySelector(`#like-${post.postid}`)
 
-                post['likes'].includes(mainuser)?likebtn.innerHTML = 'Unlike':likebtn.innerHTML = 'Like'
-
+                if (post['likes'].includes(mainuser)) {
+                    likebtn.src = "static/images/like.svg"
+                    likebtn.alt = 'like'
+                }
+                else {
+                    likebtn.src = "static/images/unlike.svg"
+                    likebtn.alt = 'unlike'
+                }
+                
                 likebtn.addEventListener('click', () => {
                     like(post)
                 })
+
 
                 const totalLikes = document.querySelector(`#totallikes-${post.postid}`)
                 if (post.likes.length == 0) {
@@ -353,10 +362,8 @@ function editpost(post) {
 }
 
 
-
 function like(post) {
 
-    const likebtn = document.querySelector(`#like-${post.postid}`)
     const mainuserID = document.querySelector('#main-user').getAttribute('value')
     const totalLikes = document.querySelector(`#totallikes-${post.postid}`)
 
@@ -370,15 +377,23 @@ function like(post) {
     })
     .then(res => res.json())
     .then(result => {
-        result['likes'].includes(mainuser)?likebtn.innerHTML='Unlike':likebtn.innerHTML='Like';
+        const likebtn = document.querySelector(`#like-${post.postid}`)
+
+        if (likebtn.alt == "like") {
+            likebtn.src = "static/images/unlike.svg"
+            likebtn.alt = "unlike"
+        }
+        else  {
+            likebtn.src = "static/images/like.svg"
+            likebtn.alt = "like"
+        }
+
         result.likes.length == 0 ? totalLikes.innerHTML = '': totalLikes.innerHTML = result.likes.length
     })
 }
 
 
-
 function profile(name) {
-
 
     document.querySelectorAll('div:not(.body, .navbar-div)').forEach(div => {
         div.style.display = 'none'
