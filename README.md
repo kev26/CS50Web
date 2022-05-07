@@ -1,6 +1,6 @@
 # Project 1 - Commerce
 
-https://www.youtube.com/watch?v=ftbpmPNE-Ew
+https://youtu.be/ftbpmPNE-Ew
 
 00:00 Active listings.
 
