@@ -1,6 +1,6 @@
 # Project 3 - Mail
 
-https://www.youtube.com/watch?v=9naU8AADrnQ
+https://youtu.be/9naU8AADrnQ
 
 00:10 Send Mail
 
