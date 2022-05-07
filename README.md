@@ -1,6 +1,5 @@
 # Project 4 - Network
 
-# Youtube of Project
 https://www.youtube.com/watch?v=kAn4brwT3Jo
 
 00:05 New Post
